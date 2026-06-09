@@ -587,7 +587,7 @@ function summonLoki() {
   // Open settings — tapping Save in settings unlocks audio (Safari requires this)
   // We hijack the save button to also dismiss the summon screen
   document.getElementById('summon-screen').dataset.summoning = 'true';
-  showSettings();
+  function summonLoki() {   unlockAudio();   dismissSummonScreen(); }
 }
 
 function dismissSummonScreen() {
