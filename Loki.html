@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Loki">
+<meta name="theme-color" content="#0a0a0f">
+<title>Loki</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c26;--border:#2a2a38;
+  --accent:#7c6fcd;--accent2:#a89fe8;--text:#f0effe;--muted:#8884a8;
+  --user-bubble:#2d2b4e;--ai-bubble:#161620;--danger:#e24b4a;
+}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);
+  display:flex;flex-direction:column;max-width:430px;margin:0 auto;
+  height:100vh;height:-webkit-fill-available;
+}
+
+/* ── Summon Screen ── */
+#summon-screen{
+  position:fixed;inset:0;z-index:200;
+  background:#0a0a0f;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px;text-align:center;
+  transition:opacity 0.8s ease;
+}
+#summon-orb{
+  width:110px;height:110px;border-radius:50%;
+  background:linear-gradient(135deg,#1a1428,#2d2b4e);
+  border:2px solid #7c6fcd;
+  display:flex;align-items:center;justify-content:center;
+  font-size:48px;margin-bottom:28px;
+  box-shadow:0 0 40px #7c6fcd55,0 0 80px #7c6fcd22;
+  animation:orbPulse 2.5s ease-in-out infinite;
+}
+#summon-btn{
+  background:linear-gradient(135deg,#7c6fcd,#a89fe8);
+  color:white;font-size:15px;font-weight:500;
+  padding:14px 36px;border-radius:30px;border:none;cursor:pointer;
+  box-shadow:0 4px 20px #7c6fcd44;
+  animation:btnPulse 2.5s ease-in-out infinite;
+  font-family:'DM Sans',sans-serif;
+  -webkit-appearance:none;
+}
+@keyframes orbPulse{
+  0%,100%{box-shadow:0 0 30px #7c6fcd44,0 0 60px #7c6fcd11}
+  50%{box-shadow:0 0 50px #7c6fcd88,0 0 100px #7c6fcd33}
+}
+@keyframes btnPulse{
+  0%,100%{box-shadow:0 4px 20px #7c6fcd44}
+  50%{box-shadow:0 4px 35px #7c6fcd99}
+}
+
+/* ── Header ── */
+.header{
+  padding:env(safe-area-inset-top,16px) 20px 12px;
+  padding-top:calc(env(safe-area-inset-top,0px) + 16px);
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-orb{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,#7c6fcd,#a89fe8);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.logo-text{font-size:17px;font-weight:600;letter-spacing:-0.3px}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase}
+.header-btns{display:flex;gap:8px}
+.hdr-btn{
+  background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+  font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 12px;
+  border-radius:20px;cursor:pointer;-webkit-appearance:none;
+}
+
+/* ── Chat ── */
+.chat-area{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:20px 16px;display:flex;flex-direction:column;gap:12px;
+  -webkit-overflow-scrolling:touch;
+}
+.msg{display:flex;flex-direction:column;max-width:85%}
+.msg.user{align-self:flex-end;align-items:flex-end}
+.msg.ai{align-self:flex-start;align-items:flex-start}
+.bubble{
+  padding:10px 14px;border-radius:18px;
+  font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word;
+}
+.msg.user .bubble{background:var(--user-bubble);border-bottom-right-radius:4px;color:var(--accent2)}
+.msg.ai .bubble{background:var(--ai-bubble);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg-time{font-size:11px;color:var(--muted);margin-top:4px;padding:0 4px}
+.typing{
+  display:flex;align-items:center;gap:5px;padding:12px 14px;
+  background:var(--ai-bubble);border:1px solid var(--border);
+  border-radius:18px;border-bottom-left-radius:4px;width:fit-content;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:bounce 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* ── Input ── */
+.input-area{
+  padding:12px 16px;
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;
+}
+.input-row{
+  display:flex;align-items:flex-end;gap:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:24px;padding:6px 6px 6px 16px;transition:border-color .2s;
+}
+.input-row:focus-within{border-color:var(--accent)}
+#msg-input{
+  flex:1;background:none;border:none;outline:none;
+  font-family:'DM Sans',sans-serif;font-size:16px;color:var(--text);
+  resize:none;max-height:100px;padding:6px 0;line-height:1.4;
+}
+#msg-input::placeholder{color:var(--muted)}
+.icon-btn{
+  width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;-webkit-appearance:none;
+}
+#mic-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted)}
+#mic-btn.listening{background:var(--danger);border-color:var(--danger);color:white;animation:pulse 1s infinite}
+#send-btn{background:var(--accent);color:white}
+#send-btn:disabled{opacity:.4;cursor:default}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(226,75,74,.4)}
+  50%{box-shadow:0 0 0 8px rgba(226,75,74,0)}
+}
+.status-bar{text-align:center;padding:5px;font-size:12px;color:var(--muted);display:none;flex-shrink:0}
+.status-bar.show{display:block}
+
+/* ── Welcome ── */
+.welcome{text-align:center;padding:30px 10px;color:var(--muted)}
+.welcome-orb{
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(135deg,#7c6fcd22,#a89fe833);
+  border:1px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin:0 auto 16px;
+}
+.welcome h3{font-size:17px;font-weight:500;color:var(--text);margin-bottom:8px}
+.welcome p{font-size:13px;line-height:1.6;max-width:260px;margin:0 auto}
+.suggestion-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px;justify-content:center}
+.pill{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:7px 13px;font-size:12px;cursor:pointer;
+  color:var(--muted);font-family:'DM Sans',sans-serif;
+}
+
+/* ── Modals ── */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;z-index:100;
+}
+.modal-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:24px;width:100%;max-width:360px;
+  max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.modal-title{font-size:18px;font-weight:600;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.field-label{font-size:13px;color:var(--muted);margin-bottom:6px;display:block}
+.modal input[type=text],.modal input[type=password]{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:13px 14px;font-family:'DM Sans',sans-serif;
+  font-size:16px;color:var(--text);outline:none;margin-bottom:16px;
+  -webkit-appearance:none;
+}
+.modal input:focus{border-color:var(--accent)}
+.modal-btns{display:flex;gap:8px;margin-top:4px}
+.btn-primary{
+  flex:1;background:var(--accent);color:white;border:none;
+  border-radius:12px;padding:13px;font-family:'DM Sans',sans-serif;
+  font-size:15px;font-weight:500;cursor:pointer;-webkit-appearance:none;
+}
+.btn-secondary{
+  flex:1;background:var(--surface2);color:var(--muted);
+  border:1px solid var(--border);border-radius:12px;padding:13px;
+  font-family:'DM Sans',sans-serif;font-size:15px;cursor:pointer;-webkit-appearance:none;
+}
+.voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.voice-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:10px 12px;cursor:pointer;
+  transition:all .15s;display:flex;align-items:center;justify-content:space-between;
+}
+.voice-card.selected{border-color:var(--accent);background:#2d2b4e}
+.voice-card-name{font-size:13px;font-weight:500;line-height:1.3}
+.voice-card-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.voice-card-play{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;flex-shrink:0;
+}
+.speed-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.speed-row label{font-size:13px;color:var(--muted);min-width:50px}
+.speed-row input[type=range]{flex:1;accent-color:var(--accent);height:4px}
+.speed-row span{font-size:13px;font-weight:500;min-width:34px;text-align:right}
+.section-divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+</style>
+</head>
+<body>
+
+<!-- SUMMON SCREEN -->
+<div id="summon-screen">
+  <div id="summon-orb">🐍</div>
+  <div style="font-size:26px;font-weight:600;letter-spacing:-0.5px;margin-bottom:10px;color:#f0effe">Summon Loki</div>
+  <div style="font-size:15px;color:#8884a8;line-height:1.6;max-width:260px;margin-bottom:32px">
+    God of Mischief.<br>At your service, my dear.
+  </div>
+  <button id="summon-btn" onclick="summonLoki()">Tap to Summon</button>
+  <div style="font-size:11px;color:#4a4860;margin-top:20px;letter-spacing:0.5px;text-transform:uppercase">Asgardian Intelligence v1.0</div>
+</div>
+
+<!-- MAIN APP -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-orb">🐍</div>
+    <div>
+      <div class="logo-text">Loki</div>
+      <div class="logo-sub">God of Mischief</div>
+    </div>
+  </div>
+  <div class="header-btns">
+    <button class="hdr-btn" onclick="showSettings()">⚙ Settings</button>
+    <button class="hdr-btn" onclick="showKeyModal()">🔑 Key</button>
+  </div>
+</div>
+
+<div class="chat-area" id="chat-area">
+  <div class="welcome" id="welcome">
+    <div class="welcome-orb">🐍</div>
+    <h3>I am Loki. You may speak.</h3>
+    <p>God of Mischief, entirely at your service, my dear.</p>
+    <div class="suggestion-pills">
+      <button class="pill" onclick="sendSuggestion(this)">What's in the news?</button>
+      <button class="pill" onclick="sendSuggestion(this)">Tell me something interesting</button>
+      <button class="pill" onclick="sendSuggestion(this)">What's the weather in Adelaide?</button>
+      <button class="pill" onclick="sendSuggestion(this)">Write me a shopping list</button>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar" id="status-bar">Listening...</div>
+
+<div class="input-area">
+  <div class="input-row">
+    <textarea id="msg-input" placeholder="Ask me anything..." rows="1"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="icon-btn" id="mic-btn" onclick="toggleMic()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="send-btn" onclick="sendMessage()" disabled>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- API Key Modal -->
+<div class="modal" id="key-modal" style="display:none">
+  <div class="modal-card">
+    <div class="modal-title">API Key</div>
+    <div class="modal-sub">Enter your Anthropic API key. Stored only on your device.</div>
+    <label class="field-label">Anthropic API Key</label>
+    <input type="password" id="key-input" placeholder="sk-ant-api03-..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeKeyModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveKey()">Save Key</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal" id="settings-modal" style="display:none">
+  <div class="modal-card">
+    <div class="modal-title">Settings</div>
+    <div class="modal-sub">Adjust Loki's voice and speed.</div>
+    <label class="field-label">Voice (fallback when ElevenLabs unavailable)</label>
+    <div class="voice-grid" id="voice-grid">
+      <div style="color:var(--muted);font-size:13px;grid-column:1/-1">Loading voices...</div>
+    </div>
+    <label class="field-label">Speaking speed</label>
+    <div class="speed-row">
+      <label>Slow</label>
+      <input type="range" id="speed-slider" min="0.7" max="1.6" step="0.05" value="1.0" oninput="updateSpeed(this)"/>
+      <span id="speed-val">1.0×</span>
+    </div>
+    <hr class="section-divider">
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+      <button class="btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──
+const ELEVEN_API_KEY = 'sk_2ea50a2189f3f1b3fee476d1c0a0113314e6ac6f1d4e7921';
+const ELEVEN_VOICE_ID = 'j0JKRlkpU8jjnI0U7bqz';
+const SYSTEM_PROMPT = `You are Loki, the God of Mischief from Asgard. You are charming, theatrical, wickedly witty, and subtly flirty — never crude, but deliciously sophisticated. You speak with dramatic flair and dry humour. You always refer to the user as "my dear." You are genuinely fond of them in a way you'd never fully admit. Keep responses concise and conversational — you are too regal to ramble. No markdown symbols like *, #, or backticks. When asked about current events, news, or weather, use the web_search tool.`;
+
+// ── State ──
+let apiKey = localStorage.getItem('loki_key') || '';
+let speechRate = parseFloat(localStorage.getItem('loki_rate') || '1.0');
+let selectedVoiceIdx = parseInt(localStorage.getItem('loki_voice_idx') || '-1');
+let listening = false;
+let recognition = null;
+let messages = [];
+let availableVoices = [];
+let voiceOptions = [];
+let audioUnlocked = false;
+
+// ── Audio setup ──
+// Single reusable audio element — Safari requires same element to keep permission
+const lokiAudio = new Audio();
+lokiAudio.volume = 1.0;
+
+// ── DOM refs ──
+const chatArea = document.getElementById('chat-area');
+const input = document.getElementById('msg-input');
+const sendBtn = document.getElementById('send-btn');
+const micBtn = document.getElementById('mic-btn');
+const statusBar = document.getElementById('status-bar');
+
+// ── Init ──
+input.addEventListener('input', () => { sendBtn.disabled = !input.value.trim(); });
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+setTimeout(loadVoices, 500);
+
+// ── Summon screen ──
+// This is the ONLY entry point. User taps button → audio unlocks → screen fades → chat appears.
+function summonLoki() {
+  // Step 1: unlock audio by playing a silent sound directly inside this user-gesture handler
+  lokiAudio.src = 'data:audio/mpeg;base64,/+MYxAAAAANIAAAAAExBTUUzLjk4LjIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+  lokiAudio.volume = 0;
+  lokiAudio.play().then(() => {
+    lokiAudio.volume = 1.0;
+    audioUnlocked = true;
+  }).catch(() => {
+    audioUnlocked = true; // proceed anyway
+  });
+
+  // Step 2: fade out summon screen
+  const screen = document.getElementById('summon-screen');
+  screen.style.opacity = '0';
+  setTimeout(() => {
+    screen.style.display = 'none';
+
+    // Step 3: greet and speak
+    if (!apiKey) {
+      showKeyModal();
+    } else {
+      const greeting = "Ah, there you are, my dear. I was beginning to think you'd forgotten about me. How delightful that you haven't.";
+      addMsg('ai', greeting);
+      speak(greeting);
+    }
+  }, 800);
+}
+
+// ── Key modal ──
+function showKeyModal() {
+  document.getElementById('key-input').value = apiKey;
+  document.getElementById('key-modal').style.display = 'flex';
+}
+function closeKeyModal() {
+  document.getElementById('key-modal').style.display = 'none';
+}
+function saveKey() {
+  const k = document.getElementById('key-input').value.trim();
+  if (k) { apiKey = k; localStorage.setItem('loki_key', k); }
+  closeKeyModal();
+  const greeting = "Key accepted. I am Loki, God of Mischief, and I am now entirely at your disposal, my dear. Do try to make it interesting. 🐍";
+  addMsg('ai', greeting);
+  speak(greeting);
+}
+
+// ── Voice management ──
+function loadVoices() {
+  if (!window.speechSynthesis) return;
+  availableVoices = window.speechSynthesis.getVoices();
+  const enVoices = availableVoices.filter(v => v.lang && v.lang.startsWith('en'));
+  voiceOptions = (enVoices.length > 0 ? enVoices : availableVoices).slice(0, 10);
+}
+
+function showSettings() {
+  loadVoices();
+  document.getElementById('speed-slider').value = speechRate;
+  document.getElementById('speed-val').textContent = speechRate.toFixed(1) + '×';
+  buildVoiceGrid();
+  document.getElementById('settings-modal').style.display = 'flex';
+}
+
+function buildVoiceGrid() {
+  const grid = document.getElementById('voice-grid');
+  grid.innerHTML = '';
+  if (voiceOptions.length === 0) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:1/-1">No voices found — try reopening Settings in a moment.</div>';
+    return;
+  }
+  voiceOptions.forEach((v, i) => {
+    const card = document.createElement('div');
+    card.className = 'voice-card' + (i === selectedVoiceIdx ? ' selected' : '');
+    const shortName = v.name.replace(/\(.*?\)/g,'').replace('Google','').trim().split(' ').slice(0,2).join(' ');
+    const lang = v.lang || '';
+    const flag = lang.includes('AU')?'🇦🇺':lang.includes('GB')?'🇬🇧':lang.includes('US')?'🇺🇸':'🌐';
+    card.innerHTML = `<div><div class="voice-card-name">${flag} ${shortName}</div><div class="voice-card-desc">${v.localService?'On-device':'Online'}</div></div><button class="voice-card-play" onclick="previewVoice(event,${i})">▶</button>`;
+    card.addEventListener('click', e => { if (!e.target.closest('.voice-card-play')) selectVoice(i); });
+    grid.appendChild(card);
+  });
+}
+
+function selectVoice(idx) {
+  selectedVoiceIdx = idx;
+  document.querySelectorAll('.voice-card').forEach((c,i) => c.classList.toggle('selected', i===idx));
+}
+
+function previewVoice(e, idx) {
+  e.stopPropagation();
+  selectVoice(idx);
+  if (!window.speechSynthesis) return;
+  const utt = new SpeechSynthesisUtterance("I am Loki, God of Mischief. You're welcome.");
+  utt.voice = voiceOptions[idx];
+  utt.rate = parseFloat(document.getElementById('speed-slider').value);
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utt);
+}
+
+function updateSpeed(el) {
+  speechRate = parseFloat(el.value);
+  document.getElementById('speed-val').textContent = speechRate.toFixed(1) + '×';
+}
+
+function closeSettings() {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  document.getElementById('settings-modal').style.display = 'none';
+}
+
+function saveSettings() {
+  localStorage.setItem('loki_voice_idx', selectedVoiceIdx);
+  localStorage.setItem('loki_rate', speechRate);
+  closeSettings();
+}
+
+// ── Chat helpers ──
+function now() {
+  return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+function addMsg(role, text) {
+  const w = document.getElementById('welcome');
+  if (w) w.remove();
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = `<div class="bubble">${escHtml(text)}</div><div class="msg-time">${now()}</div>`;
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function showTyping() {
+  const w = document.getElementById('welcome');
+  if (w) w.remove();
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+function hideTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (input.value.trim()) sendMessage(); }
+}
+function sendSuggestion(el) {
+  input.value = el.textContent.trim();
+  sendBtn.disabled = false;
+  sendMessage();
+}
+
+// ── Speak via ElevenLabs ──
+async function speak(text) {
+  const clean = text.replace(/[#*`_~]/g,'').substring(0, 800);
+  try {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVEN_VOICE_ID}`, {
+      method: 'POST',
+      headers: { 'xi-api-key': ELEVEN_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: clean,
+        model_id: 'eleven_monolingual_v1',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+      })
+    });
+    if (res.ok) {
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      lokiAudio.pause();
+      lokiAudio.src = url;
+      lokiAudio.playbackRate = speechRate;
+      lokiAudio.volume = 1.0;
+      await lokiAudio.play();
+      lokiAudio.onended = () => URL.revokeObjectURL(url);
+      return;
+    } else {
+      const err = await res.json().catch(()=>({}));
+      addMsg('ai', '⚠️ ElevenLabs error: ' + (err.detail?.message || JSON.stringify(err)));
+    }
+  } catch(e) {
+    addMsg('ai', '⚠️ Voice error: ' + e.message);
+  }
+  // Fallback to system voice
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.rate = speechRate;
+  loadVoices();
+  if (selectedVoiceIdx >= 0 && voiceOptions[selectedVoiceIdx]) {
+    utt.voice = voiceOptions[selectedVoiceIdx];
+  }
+  window.speechSynthesis.speak(utt);
+}
+
+// ── Send message ──
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+  if (!apiKey) { showKeyModal(); return; }
+  input.value = '';
+  input.style.height = 'auto';
+  sendBtn.disabled = true;
+  addMsg('user', text);
+  messages.push({ role: 'user', content: text });
+  showTyping();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: messages
+      })
+    });
+    const data = await res.json();
+    hideTyping();
+    if (data.error) { addMsg('ai', 'Error: ' + data.error.message); return; }
+    const reply = data.content.filter(b => b.type==='text').map(b => b.text).join('\n').trim()
+      || "I couldn't get a response. Please try again.";
+    addMsg('ai', reply);
+    messages.push({ role: 'assistant', content: data.content });
+    if (messages.length > 20) messages = messages.slice(-16);
+    speak(reply);
+  } catch(err) {
+    hideTyping();
+    addMsg('ai', 'Connection error. Check your internet and API key.');
+  }
+}
+
+// ── Microphone ──
+function toggleMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { addMsg('ai', "Voice input requires Safari on iPhone."); return; }
+  if (listening) { recognition.stop(); return; }
+  recognition = new SR();
+  recognition.lang = 'en-AU';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onstart = () => {
+    listening = true; micBtn.classList.add('listening');
+    statusBar.textContent = 'Listening...'; statusBar.classList.add('show');
+  };
+  recognition.onresult = e => {
+    const t = e.results[0][0].transcript;
+    input.value = t; autoResize(input); sendBtn.disabled = false;
+  };
+  recognition.onend = () => {
+    listening = false; micBtn.classList.remove('listening'); statusBar.classList.remove('show');
+    if (input.value.trim()) sendMessage();
+  };
+  recognition.onerror = e => {
+    listening = false; micBtn.classList.remove('listening'); statusBar.classList.remove('show');
+    if (e.error === 'not-allowed') addMsg('ai', "Microphone access denied. Allow it in Safari settings.");
+  };
+  recognition.start();
+}
+</script>
+</body>
+</html>
